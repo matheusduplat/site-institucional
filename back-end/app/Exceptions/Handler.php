@@ -2,7 +2,10 @@
 
 namespace App\Exceptions;
 
+use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -43,8 +46,21 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (Exception $exception, $request) {
+            if ($request->is('api/*')) {
+                if($exception instanceof ValidationException){
+                    return response()->json(
+                        $exception->errors(),
+                        $exception->status
+                    );
+                }
+                if($exception instanceof InvalidArgumentException){
+                    return response()->json(
+                         $exception->getMessage(),
+                         500
+                    );
+                }
+            }
         });
     }
 }
